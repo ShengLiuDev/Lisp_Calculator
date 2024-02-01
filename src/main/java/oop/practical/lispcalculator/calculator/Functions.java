@@ -142,10 +142,15 @@ final class Functions {
         {
             throw new CalculateException("the argument is negative");
         }
+        if (result.stripTrailingZeros().scale() <= 0)
+        {
+            return result.sqrt(MathContext.DECIMAL32).setScale(result.scale(), RoundingMode.HALF_EVEN);
+        }
         // reference: https://docs.oracle.com/javase/8/docs/api/java/math/MathContext.html
         // options: DECIMAL32, DECIMAL64, UNLIMITED
         BigDecimal ans = result.sqrt(MathContext.DECIMAL32);
         BigDecimal roundedAns = ans.setScale(result.scale(), RoundingMode.HALF_EVEN);
+
         return roundedAns.stripTrailingZeros();
     }
     static BigDecimal rem(List<BigDecimal> arguments) throws CalculateException
@@ -156,6 +161,10 @@ final class Functions {
         }
         var num = arguments.get(0);
         var divisor = arguments.get(1);
+        if (divisor.compareTo(BigDecimal.ZERO) == 0)
+        {
+            throw new CalculateException("divisor is 0");
+        }
         var result = num.remainder(divisor);
         return result;
     }
@@ -168,10 +177,21 @@ final class Functions {
         }
         var num = arguments.get(0);
         var divisor = arguments.get(1);
+        if (divisor.compareTo(BigDecimal.ZERO) == 0)
+        {
+            throw new CalculateException("divisor is 0");
+        }
 
         // reference: https://stackoverflow.com/questions/5385024/mod-in-java-produces-negative-numbers
-        var result = BigDecimal.valueOf(Math.floorMod(num.longValue(), divisor.longValue()));
-        return result;
+        var result = num.remainder(divisor);
+        //System.out.println(result);
+        //System.out.println(result.signum());
+        if (result.signum() < 0)
+        {
+            result = result.add(divisor);
+        }
+
+        return result.abs();
     }
 
     static BigDecimal sin(List<BigDecimal> arguments) throws CalculateException
